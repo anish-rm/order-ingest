@@ -27,7 +27,6 @@ public class OrderIngestDbContext(DbContextOptions<OrderIngestDbContext> options
             v => v.UtcTicks,
             v => new DateTimeOffset(v, TimeSpan.Zero));
 
-        // Retries of the same provider order must land on the same row.
         order.HasIndex(o => new { o.Provider, o.ExternalOrderId }).IsUnique();
 
         // The admin list sorts newest-first.

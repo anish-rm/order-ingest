@@ -32,6 +32,7 @@ public class OrderRepository(OrderIngestDbContext db)
             return UpsertResult.Inserted;
         }
 
+        //montonic guard
         if (incoming.Status.Rank() <= existing.Status.Rank())
         {
             return UpsertResult.Skipped;
