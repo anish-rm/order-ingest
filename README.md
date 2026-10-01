@@ -13,10 +13,10 @@ normalizes them into a single internal model, and a **React admin** displays the
 
 ## Prerequisites
 
-| Tool | Version |
-|---|---|
-| .NET SDK | 10.x |
-| Node.js | 20+ |
+| Tool     | Version |
+| -------- | ------- |
+| .NET SDK | 10.x    |
+| Node.js  | 20+     |
 
 Nothing else — the database is a local SQLite file created automatically at startup.
 
@@ -126,12 +126,6 @@ Dependencies point strictly downward. The request flow:
    out-of-order event is skipped; only a strictly higher-ranked status advances the
    row (terminal states never transition). Transient failures (db contention,
    network/IO) retry 3× with backoff; anything else is logged and dropped.
-
-Every stack decision (and why) is recorded in [CLAUDE.md](CLAUDE.md), including the
-status mapping table and fixture provenance. The fixtures are copied verbatim from the
-official Uber/DoorDash docs — which is why the DoorDash line items show `$0.00`
-(DoorDash's own sample carries `price: 0` per item with the order-level
-`subtotal: 2000`).
 
 ## What I'd change for production
 
