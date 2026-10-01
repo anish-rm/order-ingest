@@ -10,7 +10,11 @@ export default function Layout({ children }: { children: ReactNode }) {
           <span className={styles.mark} aria-hidden />
           Order Ingest
         </Link>
-        <span className={styles.tagline}>provider orders, one admin</span>
+        <span className={styles.tagline}>provider orders</span>
+        <span className={styles.context}>
+          <span className={styles.contextDot} aria-hidden />
+          Admin
+        </span>
       </header>
       <main className={styles.content}>{children}</main>
     </>

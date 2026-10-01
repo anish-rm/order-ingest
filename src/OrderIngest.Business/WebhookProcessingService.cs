@@ -71,8 +71,7 @@ public class WebhookProcessingService(
             _ => throw new InvalidOperationException($"Unexpected provider {item.Provider}"),
         };
 
-        // DbContext is scoped; a BackgroundService is a singleton, so each
-        // work item gets its own scope.
+        // DbContext is scoped; a BackgroundService is a singleton, so each work item gets its own scope.
         using var scope = scopeFactory.CreateScope();
         var repository = scope.ServiceProvider.GetRequiredService<OrderRepository>();
         var result = await repository.UpsertAsync(order, ct);

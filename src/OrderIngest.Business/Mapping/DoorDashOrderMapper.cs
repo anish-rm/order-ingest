@@ -7,9 +7,8 @@ public static class DoorDashOrderMapper
 {
     /// <summary>
     /// Maps a DoorDash Marketplace webhook ({ event, order }) to the
-    /// internal Order. Items are flattened across categories; the total is
-    /// subtotal + tax (both integer cents). The payload carries no currency,
-    /// so USD is assumed (documented in CLAUDE.md).
+    /// internal Order. Items are flattened across categories; the total is subtotal + tax (both integer cents).
+    ///  The payload carries no currency, so USD is assumed.
     /// </summary>
     public static Order Map(string webhookJson, DateTimeOffset receivedAt)
     {
@@ -69,7 +68,7 @@ public static class DoorDashOrderMapper
         };
     }
 
-    /// <summary>The order integration docs define OrderCreate with status NEW.</summary>
+    // Currently public docs expose only Created status, so kept it as it is without creating or inventing new.
     public static OrderStatus MapStatus(string eventType, string eventStatus) =>
         (eventType, eventStatus) switch
         {
