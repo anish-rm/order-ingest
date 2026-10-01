@@ -1,0 +1,46 @@
+.badge {
+  display: inline-block;
+  padding: 0.15rem 0.7rem;
+  border-radius: 999px;
+  font-size: 0.82rem;
+  font-weight: 600;
+}
+
+.blue {
+  background: var(--blue-soft);
+  color: #006bb3;
+}
+
+.green {
+  background: var(--green-soft);
+  color: #158042;
+}
+
+.forest {
+  background: var(--forest);
+  color: #fff;
+}
+
+.danger {
+  background: var(--danger-soft);
+  color: var(--danger);
+}
+
+.neutral {
+  background: var(--sand-soft);
+  color: var(--muted);
+}
+
+.provider {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.45rem;
+  font-weight: 600;
+  color: var(--ink);
+}
+
+.dot {
+  width: 0.5rem;
+  height: 0.5rem;
+  border-radius: 50%;
+}
