@@ -18,8 +18,6 @@ public class OrderIngestDbContext(DbContextOptions<OrderIngestDbContext> options
         order.Property(o => o.Provider).HasConversion<string>();
         order.Property(o => o.Status).HasConversion<string>();
 
-        // SQLite cannot order or index DateTimeOffset directly, so store
-        // both timestamps as UTC ticks (INTEGER).
         order.Property(o => o.ReceivedAt).HasConversion(
             v => v.UtcTicks,
             v => new DateTimeOffset(v, TimeSpan.Zero));

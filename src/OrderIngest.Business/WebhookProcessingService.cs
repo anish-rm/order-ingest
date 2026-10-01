@@ -16,8 +16,7 @@ namespace OrderIngest.Business;
 /// For Uber the full order is fetched via IUberOrderClient (the webhook
 /// body only carries resource_href); DoorDash embeds the order directly.
 /// Transient failures are retried via <see cref="RetryExecutor"/>;
-/// unprocessable payloads are discarded without retry (they can never
-/// succeed).
+/// unprocessable payloads are discarded without retry
 /// </summary>
 public class WebhookProcessingService(
     WebhookQueue queue,
@@ -55,7 +54,6 @@ public class WebhookProcessingService(
             }
             catch (RetryExhaustedException ex)
             {
-                // In production this would go to a dead-letter queue.
                 logger.LogError(ex,
                     "Giving up on {Provider} webhook {CorrelationId} after {Attempts} attempts",
                     item.Provider, item.CorrelationId, ex.TotalAttempts);
@@ -83,7 +81,6 @@ public class WebhookProcessingService(
             _ => throw new InvalidOperationException($"Unexpected provider {item.Provider}"),
         };
 
-        // DbContext is scoped; a BackgroundService is a singleton, so each work item gets its own scope.
         using var scope = scopeFactory.CreateScope();
         var repository = scope.ServiceProvider.GetRequiredService<OrderRepository>();
         var result = await repository.UpsertAsync(order, ct);

@@ -46,7 +46,6 @@ var app = builder.Build();
 
 app.UseExceptionHandler();
 
-// Demo-scope schema management; production would use EF migrations.
 using (var scope = app.Services.CreateScope())
 {
     scope.ServiceProvider.GetRequiredService<OrderIngestDbContext>().Database.EnsureCreated();

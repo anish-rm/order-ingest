@@ -7,8 +7,7 @@ public static class WebhookCorrelation
 {
     /// <summary>
     /// Pulls a provider-native id out of the raw webhook for log
-    /// correlation: Uber's event_id, DoorDash's order id. Never throws —
-    /// a missing id degrades logs, not processing.
+    /// correlation: Uber's event_id, DoorDash's order id.
     /// </summary>
     public static string? Extract(OrderProvider provider, string rawBody)
     {

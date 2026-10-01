@@ -8,8 +8,6 @@ public class FixtureUberOrderClient(IOptions<UberOptions> options, IHostEnvironm
 {
     public Task<string> GetOrderJsonAsync(string resourceHref, CancellationToken ct = default)
     {
-        // Resolve against the content root so the fixture is found no matter
-        // which directory the app (or a test host) was started from.
         var path = options.Value.FixturePath;
         if (!Path.IsPathRooted(path))
         {

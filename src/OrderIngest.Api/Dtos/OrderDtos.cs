@@ -1,8 +1,5 @@
 namespace OrderIngest.Api.Dtos;
 
-// The admin client sees only these internal shapes — provider field names
-// (eater, consumer, cart, categories, ...) never leave the backend.
-
 public record OrderSummaryDto(
     long Id,
     string Provider,
