@@ -126,19 +126,3 @@ Dependencies point strictly downward. The request flow:
    out-of-order event is skipped; only a strictly higher-ranked status advances the
    row (terminal states never transition). Transient failures (db contention,
    network/IO) retry 3× with backoff; anything else is logged and dropped.
-
-## What I'd change for production
-
-- **Real Uber client** — flip `Uber:OrderClientMode` to `Http` and supply OAuth
-  credentials (token acquisition/refresh, scope `eats.order`); add retry/backoff with
-  jitter (e.g. Polly) and timeouts on the HttpClient.
-- **DoorDash webhook auth** — implement the header check agreed during onboarding;
-  the seam in `WebhooksController` is marked.
-- **Durable queue** — replace the in-memory Channel with SQS/RabbitMQ and a real
-  dead-letter queue; today a crash between ack and persist loses the item (shutdown
-  is drained gracefully, a kill -9 is not).
-- **PostgreSQL + EF migrations** instead of SQLite + `EnsureCreated()`.
-- **Secrets** from a secret store (the committed dev secret is a deliberate
-  demo-only convenience; startup fails fast if none is configured).
-- **Pagination + filtering** on `GET /orders`; structured logging/metrics/tracing;
-  rate limiting on the webhook endpoint; CI running tests + lint.
