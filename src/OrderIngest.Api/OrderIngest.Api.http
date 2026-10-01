@@ -1,6 +1,0 @@
-@OrderIngest.Api_HostAddress = http://localhost:5122
-
-GET {{OrderIngest.Api_HostAddress}}/weatherforecast/
-Accept: application/json
-
-###
