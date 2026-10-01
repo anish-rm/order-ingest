@@ -54,6 +54,7 @@
 .row {
   cursor: pointer;
   transition: background 120ms ease;
+  animation: fade-up 320ms ease-out both;
 }
 
 .row:hover {
@@ -157,8 +158,38 @@
 }
 
 .emptyMark {
-  font-size: 2rem;
-  color: var(--green);
+  position: relative;
+  display: inline-block;
+  width: 1rem;
+  height: 1rem;
+  border-radius: 50%;
+  background: var(--green);
+  font-size: 0;
+}
+
+.emptyMark::before,
+.emptyMark::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  border-radius: 50%;
+  border: 2px solid var(--green);
+  animation: radiate 2.2s ease-out infinite;
+}
+
+.emptyMark::after {
+  animation-delay: 1.1s;
+}
+
+@keyframes radiate {
+  from {
+    transform: scale(1);
+    opacity: 0.7;
+  }
+  to {
+    transform: scale(3.2);
+    opacity: 0;
+  }
 }
 
 .empty h2 {

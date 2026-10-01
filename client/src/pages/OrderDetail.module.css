@@ -20,6 +20,7 @@
   justify-content: space-between;
   gap: 1rem;
   margin-bottom: 1.25rem;
+  animation: fade-up 320ms ease-out both;
 }
 
 .heading h1 {
@@ -60,6 +61,15 @@
   border-radius: var(--radius-card);
   box-shadow: var(--shadow-card);
   padding: 1.1rem 1.3rem;
+  animation: fade-up 320ms ease-out both;
+}
+
+.grid .card:nth-child(2) {
+  animation-delay: 70ms;
+}
+
+.grid + .card {
+  animation-delay: 140ms;
 }
 
 .card h2 {

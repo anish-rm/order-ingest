@@ -74,10 +74,11 @@ export default function OrderList() {
               </tr>
             </thead>
             <tbody>
-              {orders.map((order) => (
+              {orders.map((order, index) => (
                 <tr
                   key={order.id}
                   className={styles.row}
+                  style={{ animationDelay: `${index * 60}ms` }}
                   onClick={() => navigate(`/order/${order.id}`)}
                 >
                   <td>

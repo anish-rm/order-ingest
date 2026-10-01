@@ -2,9 +2,15 @@ import { Link, useParams } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchOrder } from '../api/orders'
 import { formatMoney, formatTime } from '../lib/format'
+import { useCountUp } from '../lib/useCountUp'
 import Layout from '../components/Layout'
 import StatusBadge, { ProviderBadge } from '../components/StatusBadge'
 import styles from './OrderDetail.module.css'
+
+function AnimatedMoney({ cents, currency }: { cents: number; currency: string }) {
+  const animated = useCountUp(cents)
+  return <span>{formatMoney(animated, currency)}</span>
+}
 
 export default function OrderDetail() {
   const { id } = useParams<{ id: string }>()
@@ -38,7 +44,7 @@ export default function OrderDetail() {
           <header className={styles.heading}>
             <div>
               <h1>
-                {formatMoney(order.totalCents, order.currency)}
+                <AnimatedMoney cents={order.totalCents} currency={order.currency} />
                 <span className={styles.headingSep} aria-hidden>
                   ·
                 </span>
