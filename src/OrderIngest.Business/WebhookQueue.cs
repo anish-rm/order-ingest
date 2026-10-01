@@ -3,7 +3,9 @@ using OrderIngest.Domain;
 
 namespace OrderIngest.Business;
 
-public record WebhookWorkItem(OrderProvider Provider, string RawBody);
+/// <param name="CorrelationId">Uber's event_id or DoorDash's order id — ties
+/// processing logs back to the received webhook.</param>
+public record WebhookWorkItem(OrderProvider Provider, string RawBody, string? CorrelationId);
 
 /// <summary>
 /// Decouples the webhook endpoint from processing so the endpoint can
@@ -21,4 +23,6 @@ public class WebhookQueue
 
     public IAsyncEnumerable<WebhookWorkItem> ReadAllAsync(CancellationToken ct = default) =>
         _channel.Reader.ReadAllAsync(ct);
+
+    public void Complete() => _channel.Writer.TryComplete();
 }

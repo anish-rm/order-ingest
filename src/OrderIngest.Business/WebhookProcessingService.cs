@@ -1,4 +1,5 @@
-using System.Text.Json;
+using Microsoft.Data.Sqlite;
+using Microsoft.EntityFrameworkCore;
 using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
@@ -15,7 +16,8 @@ namespace OrderIngest.Business;
 /// For Uber the full order is fetched via IUberOrderClient (the webhook
 /// body only carries resource_href); DoorDash embeds the order directly.
 /// Transient failures are retried via <see cref="RetryExecutor"/>;
-/// malformed payloads are not retried (they can never succeed).
+/// unprocessable payloads are discarded without retry (they can never
+/// succeed).
 /// </summary>
 public class WebhookProcessingService(
     WebhookQueue queue,
@@ -26,33 +28,43 @@ public class WebhookProcessingService(
 {
     private const int MaxAttempts = 3;
 
+    private static bool IsTransientFailure(Exception ex) =>
+        ex is DbUpdateException
+            or SqliteException
+            or HttpRequestException
+            or IOException
+            or TimeoutException;
+
     protected override async Task ExecuteAsync(CancellationToken stoppingToken)
     {
-        await foreach (var item in queue.ReadAllAsync(stoppingToken))
+        // On shutdown, stop accepting new items and drain the ones already
+        // acknowledged with a 200 instead of dropping them. 
+        using var drainOnShutdown = stoppingToken.Register(queue.Complete);
+
+        await foreach (var item in queue.ReadAllAsync(CancellationToken.None))
         {
+            using var scope = logger.BeginScope(
+                "webhook {Provider}/{CorrelationId}", item.Provider, item.CorrelationId);
             try
             {
                 await retryExecutor.ExecuteAsync(
                     ct => ProcessAsync(item, ct),
-                    operationName: $"{item.Provider} webhook",
+                    operationName: $"{item.Provider} webhook {item.CorrelationId}",
                     maxAttempts: MaxAttempts,
-                    isRetryable: ex => ex is not JsonException,
-                    ct: stoppingToken);
-            }
-            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
-            {
-                throw;
-            }
-            catch (JsonException ex)
-            {
-                logger.LogError(ex, "Discarding malformed {Provider} payload", item.Provider);
+                    isRetryable: IsTransientFailure);
             }
             catch (RetryExhaustedException ex)
             {
                 // In production this would go to a dead-letter queue.
                 logger.LogError(ex,
-                    "Giving up on {Provider} webhook after {Attempts} attempts",
-                    item.Provider, ex.TotalAttempts);
+                    "Giving up on {Provider} webhook {CorrelationId} after {Attempts} attempts",
+                    item.Provider, item.CorrelationId, ex.TotalAttempts);
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex,
+                    "Discarding unprocessable {Provider} payload {CorrelationId}",
+                    item.Provider, item.CorrelationId);
             }
         }
     }

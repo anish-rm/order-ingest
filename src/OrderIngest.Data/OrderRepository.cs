@@ -1,4 +1,6 @@
+using Microsoft.Data.Sqlite;
 using Microsoft.EntityFrameworkCore;
+using Microsoft.Extensions.Logging;
 using OrderIngest.Domain;
 
 namespace OrderIngest.Data;
@@ -10,7 +12,7 @@ public enum UpsertResult
     Skipped,
 }
 
-public class OrderRepository(OrderIngestDbContext db)
+public class OrderRepository(OrderIngestDbContext db, ILogger<OrderRepository> logger)
 {
     /// <summary>
     /// Inserts the order, or — if a row for (provider, external order id)
@@ -28,11 +30,26 @@ public class OrderRepository(OrderIngestDbContext db)
         if (existing is null)
         {
             db.Orders.Add(incoming);
-            await db.SaveChangesAsync(ct);
-            return UpsertResult.Inserted;
+            try
+            {
+                await db.SaveChangesAsync(ct);
+                return UpsertResult.Inserted;
+            }
+            catch (DbUpdateException ex)
+                when (ex.InnerException is SqliteException { SqliteErrorCode: 19 })
+            {
+                return UpsertResult.Skipped;
+            }
+            catch (Exception ex)
+            {
+                logger.LogError(ex,
+                    "Failed to insert {Provider} order {ExternalOrderId}",
+                    incoming.Provider, incoming.ExternalOrderId);
+                throw;
+            }
         }
 
-        //montonic guard
+        // Monotonic guard: only a strictly higher-ranked status may advance the row.
         if (incoming.Status.Rank() <= existing.Status.Rank())
         {
             return UpsertResult.Skipped;

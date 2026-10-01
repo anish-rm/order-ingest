@@ -8,8 +8,15 @@ var builder = WebApplication.CreateBuilder(args);
 
 builder.Services.AddControllers();
 
-builder.Services.Configure<UberOptions>(
-    builder.Configuration.GetSection(UberOptions.SectionName));
+builder.Services.AddProblemDetails();
+builder.Services.AddHealthChecks();
+
+
+builder.Services.AddOptions<UberOptions>()
+    .BindConfiguration(UberOptions.SectionName)
+    .Validate(o => !string.IsNullOrWhiteSpace(o.ClientSecret),
+        "Uber:ClientSecret must be configured (the dev-only value lives in appsettings.Development.json)")
+    .ValidateOnStart();
 
 builder.Services.AddDbContext<OrderIngestDbContext>(options =>
     options.UseSqlite(builder.Configuration.GetConnectionString("Orders")));
@@ -20,10 +27,10 @@ builder.Services.AddSingleton<RetryExecutor>();
 builder.Services.AddSingleton<WebhookQueue>();
 builder.Services.AddHostedService<WebhookProcessingService>();
 
-// The one-config-change swap: "Fixture" serves fixtures/uber-get-order.json,
-// Currently I dont have Uber developer account, an app registered and approved for Eats API access, and a token flow
-// So I implemented fixtureUberOrderClient for this demo.
-// "Http" does the real GET against resource_href.
+// Order-client selection is a single config switch (Uber:OrderClientMode).
+// "Http" performs the real GET against resource_href; the default "Fixture"
+// serves fixtures/uber-get-order.json, because the real call requires Uber
+// developer credentials (OAuth token) that a local demo cannot have.
 if (builder.Configuration["Uber:OrderClientMode"] == "Http")
 {
     builder.Services.AddHttpClient<IUberOrderClient, HttpUberOrderClient>();
@@ -37,6 +44,8 @@ builder.Services.AddOpenApi();
 
 var app = builder.Build();
 
+app.UseExceptionHandler();
+
 // Demo-scope schema management; production would use EF migrations.
 using (var scope = app.Services.CreateScope())
 {
@@ -48,6 +57,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
+app.MapHealthChecks("/healthz");
 app.MapControllers();
 
 app.Run();

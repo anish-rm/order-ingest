@@ -7,7 +7,7 @@ public static class ProviderDetector
 {
     /// <summary>
     /// Detects the provider from the payload shape:
-    /// a root "event_type" string marks Uber (orders.notification),
+    /// a root "event_type" equal to "orders.notification" marks Uber
     /// a root "event" object with a "type" field marks DoorDash.
     /// Returns null when neither shape matches or the body is not JSON.
     /// </summary>
@@ -32,7 +32,8 @@ public static class ProviderDetector
             }
 
             if (root.TryGetProperty("event_type", out var eventType)
-                && eventType.ValueKind == JsonValueKind.String)
+                && eventType.ValueKind == JsonValueKind.String
+                && eventType.GetString() == "orders.notification")
             {
                 return OrderProvider.Uber;
             }

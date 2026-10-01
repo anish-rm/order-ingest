@@ -8,7 +8,8 @@ namespace OrderIngest.Api.Controllers;
 [Route("webhooks")]
 public class WebhooksController(
     UberSignatureVerifier signatureVerifier,
-    WebhookQueue queue) : ControllerBase
+    WebhookQueue queue,
+    ILogger<WebhooksController> logger) : ControllerBase
 {
     [HttpPost("orders")]
     public async Task<IActionResult> ReceiveAsync(CancellationToken ct)
@@ -23,7 +24,7 @@ public class WebhooksController(
             rawBody = await reader.ReadToEndAsync(ct);
         }
 
-        //setting position to 0 so any downstream services after the controller can able to read the data.
+        // Rewind so middleware behind the controller can still read the body.
         Request.Body.Position = 0;
 
         var provider = ProviderDetector.Detect(rawBody);
@@ -35,9 +36,9 @@ public class WebhooksController(
                 detail: "Body is not JSON or matches no known provider shape.");
         }
 
-        // Uber's webhook auth is publicly specified so I implemented it
-        // DoorDash's is negotiated during merchant onboarding and undocumented publicly, 
-        // so I scoped it out deliberately and left the insertion point obvious.
+        // Uber's webhook auth is publicly specified, so it is verified here.
+        // DoorDash's is negotiated during merchant onboarding and not
+        // publicly documented; its check would plug in at this same point.
         if (provider == OrderProvider.Uber
             && !signatureVerifier.IsValid(rawBody, Request.Headers["X-Uber-Signature"]))
         {
@@ -46,9 +47,14 @@ public class WebhooksController(
                 title: "Invalid X-Uber-Signature");
         }
 
-        await queue.EnqueueAsync(new WebhookWorkItem(provider.Value, rawBody), ct);
+        var correlationId = WebhookCorrelation.Extract(provider.Value, rawBody);
+        logger.LogInformation(
+            "Accepted {Provider} webhook {CorrelationId}", provider, correlationId);
 
-        // 200 with an empty body, per Uber's webhook contract. Processing happens after this response, on the background service.
+        await queue.EnqueueAsync(new WebhookWorkItem(provider.Value, rawBody, correlationId), ct);
+
+        // 200 with an empty body, per Uber's webhook contract. Processing
+        // happens after this response, on the background service.
         return Ok();
     }
 }
