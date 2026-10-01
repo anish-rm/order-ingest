@@ -52,13 +52,32 @@
 }
 
 .row {
-  cursor: pointer;
+  position: relative;
   transition: background 120ms ease;
   animation: fade-up 320ms ease-out both;
 }
 
-.row:hover {
+.row:hover,
+.row:focus-within {
   background: var(--bg);
+}
+
+.rowLink {
+  color: inherit;
+  text-decoration: none;
+}
+
+/* Stretch the link's hit area across the entire row. */
+.rowLink::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+}
+
+.rowLink:focus-visible::after {
+  outline: 2px solid var(--green);
+  outline-offset: -2px;
+  border-radius: 4px;
 }
 
 .row:hover .chevron {

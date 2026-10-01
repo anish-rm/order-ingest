@@ -1,5 +1,3 @@
-// Types mirror the API's internal DTOs — no provider field names here.
-
 export interface OrderSummary {
   id: number
   provider: string

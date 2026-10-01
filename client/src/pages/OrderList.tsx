@@ -1,4 +1,4 @@
-import { useNavigate } from 'react-router-dom'
+import { Link } from 'react-router-dom'
 import { useQuery } from '@tanstack/react-query'
 import { fetchOrders } from '../api/orders'
 import { formatMoney, formatTime } from '../lib/format'
@@ -7,7 +7,6 @@ import StatusBadge, { ProviderBadge } from '../components/StatusBadge'
 import styles from './OrderList.module.css'
 
 export default function OrderList() {
-  const navigate = useNavigate()
   const { data: orders, isPending, isError, error, refetch } = useQuery({
     queryKey: ['orders'],
     queryFn: fetchOrders,
@@ -79,10 +78,11 @@ export default function OrderList() {
                   key={order.id}
                   className={styles.row}
                   style={{ animationDelay: `${index * 60}ms` }}
-                  onClick={() => navigate(`/order/${order.id}`)}
                 >
                   <td>
-                    <ProviderBadge provider={order.provider} />
+                    <Link to={`/order/${order.id}`} className={styles.rowLink}>
+                      <ProviderBadge provider={order.provider} />
+                    </Link>
                   </td>
                   <td>
                     <StatusBadge status={order.status} />

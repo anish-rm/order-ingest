@@ -1,0 +1,30 @@
+.page {
+  max-width: 480px;
+  margin: 4rem auto;
+  padding: 2rem;
+  text-align: center;
+  background: var(--surface);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
+}
+
+.message {
+  color: var(--muted);
+  overflow-wrap: anywhere;
+}
+
+.reload {
+  padding: 0.5rem 1.4rem;
+  border: none;
+  border-radius: 999px;
+  background: var(--forest);
+  color: #fff;
+  font: inherit;
+  font-weight: 600;
+  cursor: pointer;
+}
+
+.reload:hover {
+  background: var(--forest-deep);
+}
