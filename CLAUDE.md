@@ -11,10 +11,10 @@ decision made before implementation so any change is deliberate, not accidental.
 | 1 | .NET version | .NET 10 (LTS) | Current LTS; the only SDK required on a fresh clone |
 | 2 | Database | SQLite file | Zero setup, real unique index for idempotency; Postgres is the prod swap |
 | 3 | Data access | EF Core + `EnsureCreated()` at startup | One table, demo scope; migrations are the prod swap |
-| 4 | Layout | n-tier: Api → Business → Data → Domain under `src/`, one test project | Dependencies flow downward only; Api has no business/data logic |
+| 4 | Layout | n-tier: Api → Business → Data → Domain under `src/`, one test project; API uses MVC controllers | Dependencies flow downward only; Api has no business/data logic |
 | 5 | Webhook processing | `Channel<T>` + `BackgroundService` | Spec says respond 200 *then* process; both providers share one processing path |
 | 6 | Uber GET stub | `IUberOrderClient` interface; `FixtureUberOrderClient` (dev) vs `HttpUberOrderClient` (prod) selected by config `UberClient:Mode` | Prod-ready with one config change |
-| 7 | Signature verification | Endpoint filter on POST /webhooks/orders; `Request.EnableBuffering()`, raw body read once; `CryptographicOperations.FixedTimeEquals`; **401** on mismatch | 401 = caller not proven to be Uber; 400 is for malformed requests |
+| 7 | Signature verification | `UberSignatureVerifier` service called at the top of the webhook controller action; `Request.EnableBuffering()`, raw body read once; `CryptographicOperations.FixedTimeEquals`; **401** on mismatch | 401 = caller not proven to be Uber; 400 is for malformed requests |
 | 8 | Duplicate handling | Upsert on `(provider, external_order_id)` with monotonic status guard (see below) | Replays are no-ops; real state changes are applied; never a duplicate row |
 | 9 | Status normalization | Internal enum + rank; `raw_status` preserved | See mapping table below |
 | 10 | Customer / line items | JSON columns on the single `orders` row (EF owned types + `ToJson()`) | Spec says "one internal row"; admin only reads whole orders |

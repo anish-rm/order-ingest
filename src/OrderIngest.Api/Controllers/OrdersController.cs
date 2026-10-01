@@ -1,24 +1,26 @@
+using Microsoft.AspNetCore.Mvc;
 using OrderIngest.Api.Dtos;
 using OrderIngest.Data;
 using OrderIngest.Domain;
 
-namespace OrderIngest.Api.Endpoints;
+namespace OrderIngest.Api.Controllers;
 
-public static class OrderEndpoints
+[ApiController]
+[Route("orders")]
+public class OrdersController(OrderRepository repository) : ControllerBase
 {
-    public static void MapOrderEndpoints(this IEndpointRouteBuilder app)
+    [HttpGet]
+    public async Task<ActionResult<IEnumerable<OrderSummaryDto>>> ListAsync(CancellationToken ct)
     {
-        app.MapGet("/orders", async (OrderRepository repository, CancellationToken ct) =>
-        {
-            var orders = await repository.ListNewestFirstAsync(ct);
-            return Results.Ok(orders.Select(ToSummary));
-        });
+        var orders = await repository.ListNewestFirstAsync(ct);
+        return Ok(orders.Select(ToSummary));
+    }
 
-        app.MapGet("/orders/{id:long}", async (long id, OrderRepository repository, CancellationToken ct) =>
-        {
-            var order = await repository.GetByIdAsync(id, ct);
-            return order is null ? Results.NotFound() : Results.Ok(ToDetail(order));
-        });
+    [HttpGet("{id:long}")]
+    public async Task<ActionResult<OrderDetailDto>> GetAsync(long id, CancellationToken ct)
+    {
+        var order = await repository.GetByIdAsync(id, ct);
+        return order is null ? NotFound() : Ok(ToDetail(order));
     }
 
     private static OrderSummaryDto ToSummary(Order order) => new(

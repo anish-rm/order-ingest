@@ -1,10 +1,11 @@
 using Microsoft.EntityFrameworkCore;
-using OrderIngest.Api.Endpoints;
 using OrderIngest.Business;
 using OrderIngest.Business.Uber;
 using OrderIngest.Data;
 
 var builder = WebApplication.CreateBuilder(args);
+
+builder.Services.AddControllers();
 
 builder.Services.Configure<UberOptions>(
     builder.Configuration.GetSection(UberOptions.SectionName));
@@ -43,8 +44,7 @@ if (app.Environment.IsDevelopment())
     app.MapOpenApi();
 }
 
-app.MapWebhookEndpoints();
-app.MapOrderEndpoints();
+app.MapControllers();
 
 app.Run();
 
