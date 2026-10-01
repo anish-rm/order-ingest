@@ -19,6 +19,8 @@ builder.Services.AddSingleton<WebhookQueue>();
 builder.Services.AddHostedService<WebhookProcessingService>();
 
 // The one-config-change swap: "Fixture" serves fixtures/uber-get-order.json,
+// Currently I dont have Uber developer account, an app registered and approved for Eats API access, and a token flow
+// So I implemented fixtureUberOrderClient for this demo.
 // "Http" does the real GET against resource_href.
 if (builder.Configuration["Uber:OrderClientMode"] == "Http")
 {
@@ -47,6 +49,3 @@ if (app.Environment.IsDevelopment())
 app.MapControllers();
 
 app.Run();
-
-// Exposes the implicit Program class to WebApplicationFactory in tests.
-public partial class Program;
