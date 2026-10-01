@@ -1,5 +1,6 @@
 using Microsoft.EntityFrameworkCore;
 using OrderIngest.Business;
+using OrderIngest.Business.Retry;
 using OrderIngest.Business.Uber;
 using OrderIngest.Data;
 
@@ -15,6 +16,7 @@ builder.Services.AddDbContext<OrderIngestDbContext>(options =>
 builder.Services.AddScoped<OrderRepository>();
 
 builder.Services.AddSingleton<UberSignatureVerifier>();
+builder.Services.AddSingleton<RetryExecutor>();
 builder.Services.AddSingleton<WebhookQueue>();
 builder.Services.AddHostedService<WebhookProcessingService>();
 

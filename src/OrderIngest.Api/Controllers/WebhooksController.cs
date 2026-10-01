@@ -22,6 +22,8 @@ public class WebhooksController(
         {
             rawBody = await reader.ReadToEndAsync(ct);
         }
+
+        //setting position to 0 so any downstream services after the controller can able to read the data.
         Request.Body.Position = 0;
 
         var provider = ProviderDetector.Detect(rawBody);
@@ -33,9 +35,9 @@ public class WebhooksController(
                 detail: "Body is not JSON or matches no known provider shape.");
         }
 
-        // 401, not 400: the request is well-formed but the caller has not
-        // proven it is Uber. DoorDash auth is configured out-of-band and is
-        // out of scope (see CLAUDE.md); this check is its seam.
+        // Uber's webhook auth is publicly specified so I implemented it
+        // DoorDash's is negotiated during merchant onboarding and undocumented publicly, 
+        // so I scoped it out deliberately and left the insertion point obvious.
         if (provider == OrderProvider.Uber
             && !signatureVerifier.IsValid(rawBody, Request.Headers["X-Uber-Signature"]))
         {
@@ -46,8 +48,7 @@ public class WebhooksController(
 
         await queue.EnqueueAsync(new WebhookWorkItem(provider.Value, rawBody), ct);
 
-        // 200 with an empty body, per Uber's webhook contract. Processing
-        // happens after this response, on the background service.
+        // 200 with an empty body, per Uber's webhook contract. Processing happens after this response, on the background service.
         return Ok();
     }
 }

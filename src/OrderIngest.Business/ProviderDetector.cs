@@ -6,7 +6,7 @@ namespace OrderIngest.Business;
 public static class ProviderDetector
 {
     /// <summary>
-    /// Detects the provider from the payload shape alone:
+    /// Detects the provider from the payload shape:
     /// a root "event_type" string marks Uber (orders.notification),
     /// a root "event" object with a "type" field marks DoorDash.
     /// Returns null when neither shape matches or the body is not JSON.

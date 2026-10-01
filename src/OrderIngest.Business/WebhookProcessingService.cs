@@ -3,6 +3,7 @@ using Microsoft.Extensions.DependencyInjection;
 using Microsoft.Extensions.Hosting;
 using Microsoft.Extensions.Logging;
 using OrderIngest.Business.Mapping;
+using OrderIngest.Business.Retry;
 using OrderIngest.Business.Uber;
 using OrderIngest.Data;
 using OrderIngest.Domain;
@@ -13,12 +14,13 @@ namespace OrderIngest.Business;
 /// Consumes queued webhooks after the endpoint has already returned 200.
 /// For Uber the full order is fetched via IUberOrderClient (the webhook
 /// body only carries resource_href); DoorDash embeds the order directly.
-/// Transient failures are retried up to 3 times; malformed payloads are
-/// not retried (they can never succeed).
+/// Transient failures are retried via <see cref="RetryExecutor"/>;
+/// malformed payloads are not retried (they can never succeed).
 /// </summary>
 public class WebhookProcessingService(
     WebhookQueue queue,
     IUberOrderClient uberOrderClient,
+    RetryExecutor retryExecutor,
     IServiceScopeFactory scopeFactory,
     ILogger<WebhookProcessingService> logger) : BackgroundService
 {
@@ -28,42 +30,29 @@ public class WebhookProcessingService(
     {
         await foreach (var item in queue.ReadAllAsync(stoppingToken))
         {
-            await ProcessWithRetriesAsync(item, stoppingToken);
-        }
-    }
-
-    private async Task ProcessWithRetriesAsync(WebhookWorkItem item, CancellationToken ct)
-    {
-        for (var attempt = 1; attempt <= MaxAttempts; attempt++)
-        {
             try
             {
-                await ProcessAsync(item, ct);
-                return;
+                await retryExecutor.ExecuteAsync(
+                    ct => ProcessAsync(item, ct),
+                    operationName: $"{item.Provider} webhook",
+                    maxAttempts: MaxAttempts,
+                    isRetryable: ex => ex is not JsonException,
+                    ct: stoppingToken);
             }
-            catch (OperationCanceledException) when (ct.IsCancellationRequested)
+            catch (OperationCanceledException) when (stoppingToken.IsCancellationRequested)
             {
                 throw;
             }
             catch (JsonException ex)
             {
                 logger.LogError(ex, "Discarding malformed {Provider} payload", item.Provider);
-                return;
             }
-            catch (Exception ex) when (attempt < MaxAttempts)
-            {
-                logger.LogWarning(ex,
-                    "Processing {Provider} webhook failed (attempt {Attempt}/{Max}), retrying",
-                    item.Provider, attempt, MaxAttempts);
-                await Task.Delay(TimeSpan.FromMilliseconds(200 * attempt), ct);
-            }
-            catch (Exception ex)
+            catch (RetryExhaustedException ex)
             {
                 // In production this would go to a dead-letter queue.
                 logger.LogError(ex,
-                    "Giving up on {Provider} webhook after {Max} attempts",
-                    item.Provider, MaxAttempts);
-                return;
+                    "Giving up on {Provider} webhook after {Attempts} attempts",
+                    item.Provider, ex.TotalAttempts);
             }
         }
     }
