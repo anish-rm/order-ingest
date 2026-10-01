@@ -20,6 +20,7 @@ public class ProviderDetectorTests
     [InlineData("[1, 2, 3]")]
     [InlineData("{}")]
     [InlineData("""{"provider": "uber"}""")]
+    [InlineData("""{"event_type": "store.provisioned"}""")]
     [InlineData("""{"event": "not-an-object"}""")]
     public void UnrecognizedPayloads_AreNotDetected(string body) =>
         Assert.Null(ProviderDetector.Detect(body));

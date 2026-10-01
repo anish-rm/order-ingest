@@ -2,49 +2,20 @@ using System.Net;
 using System.Security.Cryptography;
 using System.Text;
 using System.Text.Json;
-using Microsoft.AspNetCore.Hosting;
-using Microsoft.AspNetCore.Mvc.Testing;
 
 namespace OrderIngest.Tests;
 
 public class WebhookIntegrationTests
 {
-    private const string Secret = "integration-test-secret";
-
-    /// <summary>
-    /// Each factory gets its own SQLite file so tests cannot see each
-    /// other's rows; the file is removed when the factory is disposed.
-    /// </summary>
-    private sealed class ApiFactory : WebApplicationFactory<Program>
-    {
-        private readonly string _dbPath =
-            Path.Combine(Path.GetTempPath(), $"order-ingest-test-{Guid.NewGuid():N}.db");
-
-        protected override void ConfigureWebHost(IWebHostBuilder builder)
-        {
-            builder.UseSetting("ConnectionStrings:Orders", $"Data Source={_dbPath}");
-            builder.UseSetting("Uber:ClientSecret", Secret);
-        }
-
-        protected override void Dispose(bool disposing)
-        {
-            base.Dispose(disposing);
-            if (File.Exists(_dbPath))
-            {
-                File.Delete(_dbPath);
-            }
-        }
-    }
-
-    private static string Sign(string body) =>
+    internal static string Sign(string body) =>
         Convert.ToHexStringLower(HMACSHA256.HashData(
-            Encoding.UTF8.GetBytes(Secret),
+            Encoding.UTF8.GetBytes(TestApiFactory.UberSecret),
             Encoding.UTF8.GetBytes(body)));
 
-    private static HttpContent JsonContent(string body) =>
+    internal static HttpContent JsonContent(string body) =>
         new StringContent(body, Encoding.UTF8, "application/json");
 
-    private static async Task<HttpResponseMessage> PostUberAsync(HttpClient client, string body)
+    internal static async Task<HttpResponseMessage> PostUberAsync(HttpClient client, string body)
     {
         var content = JsonContent(body);
         content.Headers.Add("X-Uber-Signature", Sign(body));
@@ -52,7 +23,7 @@ public class WebhookIntegrationTests
     }
 
     /// <summary>Processing happens on a background service after the 200, so poll briefly.</summary>
-    private static async Task<JsonElement> WaitForOrderCountAsync(HttpClient client, int expected)
+    internal static async Task<JsonElement> WaitForOrderCountAsync(HttpClient client, int expected)
     {
         JsonElement orders = default;
         for (var i = 0; i < 50; i++)
@@ -74,7 +45,7 @@ public class WebhookIntegrationTests
     [Fact]
     public async Task UberWebhook_PostedTwice_YieldsExactlyOneRow()
     {
-        using var factory = new ApiFactory();
+        using var factory = new TestApiFactory();
         using var client = factory.CreateClient();
         var body = TestFixtures.Read("uber-notification.json");
 
@@ -97,7 +68,7 @@ public class WebhookIntegrationTests
     [Fact]
     public async Task UberWebhook_InvalidSignature_Returns401AndStoresNothing()
     {
-        using var factory = new ApiFactory();
+        using var factory = new TestApiFactory();
         using var client = factory.CreateClient();
         var body = TestFixtures.Read("uber-notification.json");
 
@@ -114,7 +85,7 @@ public class WebhookIntegrationTests
     [Fact]
     public async Task UnrecognizedPayload_Returns400()
     {
-        using var factory = new ApiFactory();
+        using var factory = new TestApiFactory();
         using var client = factory.CreateClient();
 
         var response = await client.PostAsync(
@@ -124,9 +95,21 @@ public class WebhookIntegrationTests
     }
 
     [Fact]
+    public async Task NonOrderUberEventType_Returns400()
+    {
+        using var factory = new TestApiFactory();
+        using var client = factory.CreateClient();
+
+        var response = await client.PostAsync(
+            "/webhooks/orders", JsonContent("""{"event_type": "store.provisioned"}"""));
+
+        Assert.Equal(HttpStatusCode.BadRequest, response.StatusCode);
+    }
+
+    [Fact]
     public async Task DoorDashWebhook_IsStored_AndExposedWithInternalNamesOnly()
     {
-        using var factory = new ApiFactory();
+        using var factory = new TestApiFactory();
         using var client = factory.CreateClient();
         var body = TestFixtures.Read("doordash-order.json");
 
@@ -154,7 +137,7 @@ public class WebhookIntegrationTests
     [Fact]
     public async Task BothFixtures_ProduceTwoRows_NewestFirst()
     {
-        using var factory = new ApiFactory();
+        using var factory = new TestApiFactory();
         using var client = factory.CreateClient();
 
         await PostUberAsync(client, TestFixtures.Read("uber-notification.json"));
