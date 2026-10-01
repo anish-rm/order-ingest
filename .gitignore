@@ -1,0 +1,21 @@
+# .NET
+bin/
+obj/
+*.user
+.vs/
+*.DotSettings.user
+
+# SQLite database (recreated at startup — fresh clone must start empty)
+*.db
+*.db-shm
+*.db-wal
+
+# Node / React client
+node_modules/
+client/dist/
+*.local
+
+# Editors / OS
+.DS_Store
+.idea/
+.vscode/
