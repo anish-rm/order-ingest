@@ -47,6 +47,8 @@ From the repo root, with the API running.
 **Uber Eats** (`orders.notification`, signed with the dev-only secret from
 `appsettings.Development.json`):
 
+macOS / Linux:
+
 ```bash
 curl -i -X POST 'http://localhost:5080/webhooks/orders' \
   -H 'Content-Type: application/json' \
@@ -54,7 +56,18 @@ curl -i -X POST 'http://localhost:5080/webhooks/orders' \
   --data-binary @fixtures/uber-notification.json
 ```
 
+Windows PowerShell:
+
+```powershell
+curl.exe -i -X POST "http://localhost:5080/webhooks/orders" `
+   -H "Content-Type: application/json" `
+   -H "X-Uber-Signature: d3f2587df0b8d5371ca6480f9d2ab4fe2ae2e4d4fb3b41df0304b346319c2eaa" `
+   --data-binary "@fixtures/uber-notification.json"
+```
+
 **DoorDash Marketplace** (`{ event, order }`):
+
+macOS / Linux:
 
 ```bash
 curl -i -X POST 'http://localhost:5080/webhooks/orders' \
@@ -62,12 +75,28 @@ curl -i -X POST 'http://localhost:5080/webhooks/orders' \
   --data-binary @fixtures/doordash-order.json
 ```
 
+Windows PowerShell:
+
+```powershell
+curl.exe -i -X POST "http://localhost:5080/webhooks/orders" `
+   -H "Content-Type: application/json" `
+   --data-binary "@fixtures/doordash-order.json"
+```
+
 Both return `200` with an empty body. Open **http://localhost:5173** — the list shows
 both orders (DoorDash US$23.00, Uber US$13.99); click a row for customer, line items,
 and status. Or check from the terminal:
 
+macOS / Linux:
+
 ```bash
 curl -s http://localhost:5080/orders
+```
+
+Windows PowerShell:
+
+```powershell
+curl.exe -s http://localhost:5080/orders
 ```
 
 **Replay = no duplicate.** Send the Uber curl again — still `200`, still one Uber row
