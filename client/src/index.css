@@ -17,10 +17,11 @@
   --danger-soft: #faeae6;
 
   --radius-card: 16px;
-  --shadow-card: 0 1px 2px rgb(14 55 39 / 0.06), 0 8px 24px rgb(14 55 39 / 0.06);
+  --shadow-card:
+    0 1px 2px rgb(14 55 39 / 0.06), 0 8px 24px rgb(14 55 39 / 0.06);
 
-  --font-display: 'Fraunces', Georgia, serif;
-  --font-body: 'Hanken Grotesk', system-ui, -apple-system, sans-serif;
+  --font-display: "Fraunces", Georgia, serif;
+  --font-body: "Hanken Grotesk", system-ui, -apple-system, sans-serif;
 }
 
 * {

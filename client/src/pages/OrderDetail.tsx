@@ -1,24 +1,36 @@
-import { Link, useParams } from 'react-router-dom'
-import { useQuery } from '@tanstack/react-query'
-import { fetchOrder } from '../api/orders'
-import { formatMoney, formatTime } from '../lib/format'
-import { useCountUp } from '../lib/useCountUp'
-import Layout from '../components/Layout'
-import StatusBadge, { ProviderBadge } from '../components/StatusBadge'
-import styles from './OrderDetail.module.css'
+import { Link, useParams } from "react-router-dom";
+import { useQuery } from "@tanstack/react-query";
+import { fetchOrder } from "../api/orders";
+import { formatMoney, formatTime } from "../lib/format";
+import { useCountUp } from "../lib/useCountUp";
+import Layout from "../components/Layout";
+import StatusBadge, { ProviderBadge } from "../components/StatusBadge";
+import styles from "./OrderDetail.module.css";
 
-function AnimatedMoney({ cents, currency }: { cents: number; currency: string }) {
-  const animated = useCountUp(cents)
-  return <span>{formatMoney(animated, currency)}</span>
+function AnimatedMoney({
+  cents,
+  currency,
+}: {
+  cents: number;
+  currency: string;
+}) {
+  const animated = useCountUp(cents);
+  return <span>{formatMoney(animated, currency)}</span>;
 }
 
 export default function OrderDetail() {
-  const { id } = useParams<{ id: string }>()
-  const { data: order, isPending, isError, error, refetch } = useQuery({
-    queryKey: ['orders', id],
+  const { id } = useParams<{ id: string }>();
+  const {
+    data: order,
+    isPending,
+    isError,
+    error,
+    refetch,
+  } = useQuery({
+    queryKey: ["orders", id],
     queryFn: () => fetchOrder(id!),
     enabled: id !== undefined,
-  })
+  });
 
   return (
     <Layout>
@@ -44,13 +56,18 @@ export default function OrderDetail() {
           <header className={styles.heading}>
             <div>
               <h1>
-                <AnimatedMoney cents={order.totalCents} currency={order.currency} />
+                <AnimatedMoney
+                  cents={order.totalCents}
+                  currency={order.currency}
+                />
                 <span className={styles.headingSep} aria-hidden>
                   ·
                 </span>
                 <ProviderBadge provider={order.provider} />
               </h1>
-              <p className={styles.orderId}>#{order.externalOrderId}</p>
+              <p className={styles.orderId}>
+                Order Id : #{order.externalOrderId}
+              </p>
             </div>
             <StatusBadge status={order.status} />
           </header>
@@ -125,5 +142,5 @@ export default function OrderDetail() {
         </>
       )}
     </Layout>
-  )
+  );
 }

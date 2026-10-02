@@ -37,9 +37,9 @@
   font-weight: 600;
   text-transform: uppercase;
   letter-spacing: 0.06em;
-  color: var(--muted);
-  background: var(--sand-soft);
-  border-bottom: 1px solid var(--line);
+  color: #fff;
+  background: var(--forest);
+  border-bottom: 1px solid var(--forest-deep);
 }
 
 .table td {
@@ -53,6 +53,8 @@
 
 .row {
   position: relative;
+  z-index: 0;
+  cursor: pointer;
   transition: background 120ms ease;
   animation: fade-up 320ms ease-out both;
 }
@@ -69,9 +71,10 @@
 
 /* Stretch the link's hit area across the entire row. */
 .rowLink::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
+  z-index: 1;
 }
 
 .rowLink:focus-visible::after {
@@ -88,7 +91,9 @@
 .chevron {
   width: 2rem;
   color: var(--sand);
-  transition: transform 120ms ease, color 120ms ease;
+  transition:
+    transform 120ms ease,
+    color 120ms ease;
 }
 
 .right {
@@ -120,7 +125,12 @@
 .skeleton {
   height: 0.95rem;
   border-radius: 999px;
-  background: linear-gradient(90deg, var(--line) 25%, var(--sand-soft) 50%, var(--line) 75%);
+  background: linear-gradient(
+    90deg,
+    var(--line) 25%,
+    var(--sand-soft) 50%,
+    var(--line) 75%
+  );
   background-size: 200% 100%;
   animation: shimmer 1.4s infinite;
 }
@@ -188,7 +198,7 @@
 
 .emptyMark::before,
 .emptyMark::after {
-  content: '';
+  content: "";
   position: absolute;
   inset: 0;
   border-radius: 50%;
