@@ -59,9 +59,16 @@ curl -i -X POST 'http://localhost:5080/webhooks/orders' \
 Windows PowerShell:
 
 ```powershell
+$secret = "dev-only-uber-client-secret"
+$body = [System.IO.File]::ReadAllBytes("fixtures/uber-notification.json")
+$hmac = New-Object System.Security.Cryptography.HMACSHA256
+$hmac.Key = [System.Text.Encoding]::UTF8.GetBytes($secret)
+$signature = -join ($hmac.ComputeHash($body) | ForEach-Object { $_.ToString("x2") })
+$hmac.Dispose()
+
 curl.exe -i -X POST "http://localhost:5080/webhooks/orders" `
    -H "Content-Type: application/json" `
-   -H "X-Uber-Signature: d3f2587df0b8d5371ca6480f9d2ab4fe2ae2e4d4fb3b41df0304b346319c2eaa" `
+   -H "X-Uber-Signature: $signature" `
    --data-binary "@fixtures/uber-notification.json"
 ```
 
@@ -103,10 +110,11 @@ curl.exe -s http://localhost:5080/orders
 (the API logs `Skipped`). The unique index on `(provider, external_order_id)` plus a
 monotonic status guard make webhook retries idempotent.
 
-> The signature above is precomputed for this exact fixture + dev secret. If you edit
-> `fixtures/uber-notification.json`, regenerate it: `./scripts/sign-uber.sh` prints a
-> fresh signature and ready-to-run curl. Note `--data-binary` everywhere — plain
-> `curl -d` strips newlines, which changes the signed bytes and breaks the HMAC.
+> The macOS/Linux signature is precomputed for this fixture + dev secret. The Windows
+> command computes the signature from the exact file bytes because Git may check out
+> the fixture with different line endings. If you edit the fixture, regenerate the
+> signature with `./scripts/sign-uber.sh` on macOS/Linux. Note `--data-binary`
+> everywhere — plain `curl -d` can change the signed bytes and break the HMAC.
 
 ## Run the tests
 
